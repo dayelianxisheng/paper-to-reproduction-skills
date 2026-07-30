@@ -1,4 +1,0 @@
-interface:
-  display_name: "Analyze Research Paper"
-  short_description: "Analyze papers, code, and pretrained-weight availability"
-  default_prompt: "Use $analyze-research-paper to analyze this paper, verify available pretrained weights online, align it with the project code, and produce a reproduction plan."
