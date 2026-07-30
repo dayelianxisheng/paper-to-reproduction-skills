@@ -1,0 +1,122 @@
+[
+  {
+    "title": "Vision-and-Language Navigation: Interpreting Visually-Grounded Navigation Instructions in Real Environments",
+    "filename": "01_2018_R2R_CVPR.pdf",
+    "url": "https://openaccess.thecvf.com/content_cvpr_2018/papers/Anderson_Vision-and-Language_Navigation_Interpreting_CVPR_2018_paper.pdf"
+  },
+  {
+    "title": "Beyond the Nav-Graph: Vision-and-Language Navigation in Continuous Environments",
+    "filename": "02_2020_VLNCE_ECCV.pdf",
+    "url": "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123730103.pdf"
+  },
+  {
+    "title": "A Recurrent Vision-and-Language BERT for Navigation",
+    "filename": "03_2021_Recurrent_VLNBERT_CVPR.pdf",
+    "url": "https://arxiv.org/pdf/2011.13922"
+  },
+  {
+    "title": "History Aware Multimodal Transformer for Vision-and-Language Navigation",
+    "filename": "04_2021_HAMT_NeurIPS.pdf",
+    "url": "https://arxiv.org/pdf/2110.13309"
+  },
+  {
+    "title": "Think Global, Act Local: Dual-Scale Graph Transformer for Vision-and-Language Navigation",
+    "filename": "05_2022_DUET_CVPR.pdf",
+    "url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Chen_Think_Global_Act_Local_Dual-Scale_Graph_Transformer_for_Vision-and-Language_Navigation_CVPR_2022_paper.pdf"
+  },
+  {
+    "title": "BEVBert: Multimodal Map Pre-training for Language-guided Navigation",
+    "filename": "06_2023_BEVBert_ICCV.pdf",
+    "url": "https://arxiv.org/pdf/2212.04385"
+  },
+  {
+    "title": "ETPNav: Evolving Topological Planning for Vision-Language Navigation in Continuous Environments",
+    "filename": "07_2024_ETPNav_TPAMI.pdf",
+    "url": "https://arxiv.org/pdf/2304.03047"
+  },
+  {
+    "title": "NaVid: Video-based VLM Plans the Next Step for Vision-and-Language Navigation",
+    "filename": "08_2024_NaVid_RSS.pdf",
+    "url": "https://arxiv.org/pdf/2402.15852"
+  },
+  {
+    "title": "Uni-NaVid: A Video-based Vision-Language-Action Model for Unifying Embodied Navigation Tasks",
+    "filename": "09_2025_UniNaVid_RSS.pdf",
+    "url": "https://arxiv.org/pdf/2412.06224"
+  },
+  {
+    "title": "Ground-level Viewpoint Vision-and-Language Navigation in Continuous Environments",
+    "filename": "10_2025_GVNav_ICRA.pdf",
+    "url": "https://arxiv.org/pdf/2502.19024"
+  },
+  {
+    "title": "SmartWay: Enhanced Waypoint Prediction and Backtracking for Zero-Shot Vision-and-Language Navigation",
+    "filename": "11_2025_SmartWay_IROS.pdf",
+    "url": "https://arxiv.org/pdf/2503.10069"
+  },
+  {
+    "title": "VLN-R1: Vision-Language Navigation via Reinforcement Fine-Tuning",
+    "filename": "12_2025_VLNR1_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2506.17221"
+  },
+  {
+    "title": "NavMorph: A Self-Evolving World Model for Vision-and-Language Navigation in Continuous Environments",
+    "filename": "13_2025_NavMorph_ICCV.pdf",
+    "url": "https://openaccess.thecvf.com/content/ICCV2025/papers/Yao_NavMorph_A_Self-Evolving_World_Model_for_Vision-and-Language_Navigation_in_Continuous_ICCV_2025_paper.pdf"
+  },
+  {
+    "title": "FutureNav: Unified World-Action Modeling for Vision-and-Language Navigation",
+    "filename": "14_2026_FutureNav_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2606.30367"
+  },
+  {
+    "title": "WorldVLN: Autoregressive World Action Model for Aerial Vision-Language Navigation",
+    "filename": "15_2026_WorldVLN_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2605.15964"
+  },
+  {
+    "title": "Fast-Slow Test-Time Adaptation for Online Vision-and-Language Navigation",
+    "filename": "16_2024_FSTTA_ICML.pdf",
+    "url": "https://arxiv.org/pdf/2311.13209"
+  },
+  {
+    "title": "General Scene Adaptation for Vision-and-Language Navigation",
+    "filename": "17_2025_GSAVLN_ICLR.pdf",
+    "url": "https://proceedings.iclr.cc/paper_files/paper/2025/file/aebf6284fe85a8f44b4785d41bc8249a-Paper-Conference.pdf"
+  },
+  {
+    "title": "Active Test-time Vision-Language Navigation",
+    "filename": "18_2025_ATENA_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2506.06630"
+  },
+  {
+    "title": "View Invariant Learning for Vision-Language Navigation in Continuous Environments",
+    "filename": "19_2025_ViewInvariant_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2507.08831"
+  },
+  {
+    "title": "Towards Open Environments and Instructions: General Vision-Language Navigation via Fast-Slow Interactive Adaptation",
+    "filename": "20_2026_GeneralVLN_FastSlow_CVPR.pdf",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Li_Towards_Open_Environments_and_Instructions_General_Vision-Language_Navigation_via_Fast-Slow_CVPR_2026_paper.pdf"
+  },
+  {
+    "title": "Human-Aware Vision-and-Language Navigation: Bridging Simulation to Reality with Dynamic Human Interactions",
+    "filename": "21_2024_HAVLN_NeurIPS.pdf",
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/d8087deaf34bb07ddd41c65f8a9fe9b5-Paper-Datasets_and_Benchmarks_Track.pdf"
+  },
+  {
+    "title": "DynamicVLN: Incorporating Dynamics into Vision-and-Language Navigation Scenarios",
+    "filename": "22_2025_DynamicVLN_Sensors.pdf",
+    "url": "https://mdpi-res.com/d_attachment/sensors/sensors-25-00364/article_deploy/sensors-25-00364-v2.pdf"
+  },
+  {
+    "title": "HA-VLN: A Benchmark for Human-Aware Navigation in Discrete-Continuous Environments with Dynamic Multi-Human Interactions, Real-World Validation, and an Open Leaderboard",
+    "filename": "23_2025_HAVLN2_arXiv.pdf",
+    "url": "https://arxiv.org/pdf/2503.14229"
+  },
+  {
+    "title": "Towards Long-Horizon Vision-Language Navigation: Platform, Benchmark and Method",
+    "filename": "24_2025_LongHorizonVLN_CVPR.pdf",
+    "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Song_Towards_Long-Horizon_Vision-Language_Navigation_Platform_Benchmark_and_Method_CVPR_2025_paper.pdf"
+  }
+]

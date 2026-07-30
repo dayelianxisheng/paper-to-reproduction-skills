@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "PDF2zh Local Bridge",
+  "version": "0.1.1",
+  "description": "Restricted localhost bridge for archiving validated PDF2zh output in Zotero.",
+  "author": "Local Codex workflow",
+  "applications": {
+    "zotero": {
+      "id": "pdf2zh-bridge@codex.local",
+      "update_url": "https://127.0.0.1:23119/pdf2zh-bridge/update",
+      "strict_min_version": "9.0.0",
+      "strict_max_version": "9.99.99"
+    }
+  }
+}

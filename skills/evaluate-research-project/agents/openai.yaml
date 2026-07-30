@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluate Research Project"
+  short_description: "Audit project dependencies, hardware, and local readiness"
+  default_prompt: "Use $evaluate-research-project to audit whether this repository can run locally and produce an evidence-based readiness report."

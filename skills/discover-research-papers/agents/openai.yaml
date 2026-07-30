@@ -1,0 +1,4 @@
+interface:
+  display_name: "Discover Research Papers"
+  short_description: "Search, expand, deduplicate, and rank research papers"
+  default_prompt: "Use $discover-research-papers to find and rank papers for my research question."

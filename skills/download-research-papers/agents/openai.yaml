@@ -1,0 +1,4 @@
+interface:
+  display_name: "Download Research Papers"
+  short_description: "Batch-download and verify research PDFs"
+  default_prompt: "Use $download-research-papers to download this paper list, verify every PDF, and report failures."

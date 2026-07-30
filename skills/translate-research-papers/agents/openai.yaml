@@ -1,0 +1,4 @@
+interface:
+  display_name: "Translate Research Papers"
+  short_description: "Translate and archive bilingual PDFs with PDF2zh and Zotero"
+  default_prompt: "Use $translate-research-papers to translate selected papers and attach validated bilingual PDFs in Zotero."

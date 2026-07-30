@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone Research Project"
+  short_description: "Clone and pin reproducible research repositories safely"
+  default_prompt: "Use $clone-research-project to clone and pin the project for reproducible work."

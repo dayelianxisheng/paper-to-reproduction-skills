@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reproduce Research Project"
+  short_description: "Prepare environments and run staged paper reproductions"
+  default_prompt: "Use $reproduce-research-project to set up and run this project at an appropriate reproduction level."

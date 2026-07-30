@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Reproduction Results"
+  short_description: "Compare reproduced metrics with the published results"
+  default_prompt: "Use $verify-reproduction-results to compare my run with the paper and explain any differences."
