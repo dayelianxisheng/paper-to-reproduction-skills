@@ -1,0 +1,4 @@
+interface:
+  display_name: "VLN Paper Reader"
+  short_description: "Read and assess VLN papers at the right depth"
+  default_prompt: "Use $vln-paper-reader to quickly read this VLN paper and decide whether it deserves deeper analysis."
