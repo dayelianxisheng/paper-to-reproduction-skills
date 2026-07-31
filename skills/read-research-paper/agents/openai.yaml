@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Paper Reader"
+  short_description: "Read and assess research papers at the right depth"
+  default_prompt: "Use $read-research-paper to quickly read this paper and decide whether it deserves deeper analysis."

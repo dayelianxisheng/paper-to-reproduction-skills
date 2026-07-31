@@ -1,9 +1,9 @@
 ---
-name: vln-paper-reader
-description: Read and assess vision-and-language navigation (VLN) research papers at a controlled depth. Use when screening a VLN paper, extracting its method and data flow, understanding training and inference, judging experimental credibility, or—when explicitly requested—analyzing formulas, code mappings, comparisons, reproduction resources, or research ideas.
+name: read-research-paper
+description: Read and assess research papers at a controlled depth, with optional checks for vision-and-language navigation (VLN). Use when screening a paper, extracting its method and data flow, understanding training and inference, judging experimental credibility, or—when explicitly requested—analyzing formulas, code mappings, comparisons, reproduction resources, or research ideas.
 ---
 
-# VLN Paper Reader
+# Research Paper Reader
 
 默认快速阅读，按需深入。先判断论文价值，再投入更多阅读和计算成本。
 
@@ -33,7 +33,7 @@ Fast 优先读取：
 
 1. **识别论文**：提取标题、年份、出处、任务类型、论文来源和已给出的代码来源；不要在 Fast 中广泛搜索相关工作。
 2. **建立全局理解**：回答研究问题、核心方法、有效证据和主要限制，避免重复复述贡献列表。
-3. **还原方法数据流**：按“输入 → 视觉/语言编码 → 历史或地图 → 多模态融合 → 决策 → 动作”组织。每个核心模块只说明输入、输出、作用和必要性。
+3. **还原方法数据流**：按“输入/数据 → 表示或编码 → 核心机制 → 融合或推理 → 预测或决策 → 输出”组织。每个核心模块只说明输入、输出、作用和必要性。
 4. **提取训练与推理**：训练只说明数据集、监督、主要损失、预训练和额外数据；推理只说明观测、状态更新、动作选择、停止以及搜索/回退/规划依赖。
 5. **判断实验可信度**：检查提升幅度、公平性、核心消融、额外数据或更大模型、Seen/Unseen 差异及性能成本。不要逐项复述所有表格。
 6. **形成研究判断**：给出主要优点、主要局限、与用户方向的关系、是否值得精读或复现，以及最合适的下一篇对比论文。无法从证据判断时标为“未说明”。
@@ -45,8 +45,8 @@ Fast 优先读取：
 - 优先解释相对已有方法真正变化的部分，不重复讲解标准注意力、Softmax 或交叉熵。
 - 核心公式解释变量、计算、作用和直觉；辅助公式一句话说明用途；常规公式除非被修改，否则跳过。
 - 默认只分析方法总图、主结果、核心消融和最关键失败案例。
-- Fast 中简要识别：离散/VLN-CE、视觉与语言输入、历史与空间表示、动作输出、额外依赖和部署能力。
-- Standard 或 Deep 时读取 [VLN 检查表](references/vln_checklist.md)；仅在论文涉及动态环境、世界模型或在线适应时启用对应扩展项。
+- Fast 中简要识别任务、输入、输出、核心表示、额外依赖和部署能力。若论文属于 VLN，再识别离散/VLN-CE、历史/空间表示和动作形式。
+- 仅当论文属于 VLN 且使用 Standard 或 Deep 时读取 [VLN 检查表](references/vln_checklist.md)；仅在论文涉及动态环境、世界模型或在线适应时启用对应扩展项。
 
 ## 输出
 
