@@ -1,4 +1,0 @@
-interface:
-  display_name: "Find Paper Project"
-  short_description: "Locate and verify official code, data, and model assets"
-  default_prompt: "Use $find-paper-project to locate the official project and supporting assets for this paper."

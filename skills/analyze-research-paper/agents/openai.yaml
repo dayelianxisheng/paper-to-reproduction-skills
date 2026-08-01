@@ -1,4 +1,0 @@
-interface:
-  display_name: "Analyze Research Paper"
-  short_description: "Extract methods, requirements, and reproduction details"
-  default_prompt: "Use $analyze-research-paper to turn this paper into a structured reproduction plan."
