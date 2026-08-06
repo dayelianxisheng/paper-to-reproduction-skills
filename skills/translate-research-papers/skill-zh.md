@@ -1,113 +1,164 @@
 ---
 name: translate-research-papers
-description: 使用本地 Zotero PDF2zh 服务翻译研究论文 PDF，保持服务终端可见；uv 可用时优先尝试，失败时回退到 PDF2zh Conda 环境；无需 GUI 点击即可调用 PDF2zh 和带鉴权的 Zotero REST bridge；验证双语输出，并把原文与译文 PDF 挂到正确的 Zotero 文献父条目下。用户要求使用 PDF2zh 翻译论文、自动化 Zotero 双语 PDF 工作流、将译文导入 Zotero，或诊断 Windows PDF2zh 服务/API 配置时使用。
+description: 在原生 Windows、原生 Linux 或 WSL 上使用本地 PDF2zh 翻译研究论文 PDF，验证中英双语版的页数、中文文本和对照布局，并可通过受限本地 bridge 将原文与译文导入 Zotero。用户要求 PDF2zh 论文翻译、中英对照 PDF、Zotero 附件导入，或诊断 PDF2zh/Zotero 服务时使用。
 ---
 
 # 使用 PDF2zh 与 Zotero 翻译研究论文
 
-在允许批量翻译前，先完整跑通一篇论文。保持 PDF2zh 服务窗口可见，以便用户
-查看进度和错误。
+先完整跑通一篇，再开始批量任务。保持 PDF2zh 服务终端可见。不得打印、复制
+或暴露 API key 与 Zotero bridge token。
 
-## 本地配置
+## 先判断平台
 
-- 原始 PDF：`D:\download`
-- 服务目录：`D:\resource\env\fanyi\server\server`
-- 服务 URL：`http://127.0.0.1:8890`
-- Conda 激活脚本：`D:\resource\env\miniconda3\Scripts\activate.bat`
-- Conda 环境：`PDF2zh`
-- Zotero 数据目录：`D:\software\Professional\Zotero\note`
-- Zotero bridge URL：`http://127.0.0.1:23119/pdf2zh-bridge`
-- Zotero bridge token：`D:\software\Professional\Zotero\note\pdf2zh-bridge.token`
-- Zotero bridge 插件 ID：`pdf2zh-bridge@codex.local`
-- 默认引擎/服务：`pdf2zh_next` 与 `siliconflowfree`
-- 双语对照 endpoint：`/compare`
+不要因为历史配置是 `D:\...` 就假定当前环境为 Windows。先检查源文件路径、
+PowerShell 与 WSL 工具：
 
-不得打印、复制或暴露 API key 与 bridge token。Zotero 运行时不得直接编辑
-`zotero.sqlite`。常规工作流中不要使用 PDF2zh 右键菜单或 Zotero 的
-Run JavaScript 窗口。
+- 原生 Windows：使用 PowerShell 脚本，默认源目录为 `D:\download`。
+- 原生 Linux：使用 `.sh` 与 `.py` 脚本；默认服务目录为
+  `~/resource/env/zotero/zotero-pdf2zh/server`。
+- WSL：只有 `powershell.exe` 和 `wslpath` 均存在时才调用 Windows 流程；否则
+  按原生 Linux 处理。
 
-## 工作流程
+用户只要求翻译时，Zotero bridge 缺失不得阻塞 PDF 产出。
 
-1. 检查原始 PDF、目标 Zotero collection、已有文献父条目和附件。确定原文
-   附件 ID 与目标 collection ID。若已存在有效译文则跳过，除非用户要求替换。
-2. 确认 Zotero 正在运行，且受限 bridge 能正常响应：
+## 翻译流程
 
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/invoke_zotero_bridge.ps1 `
-     -Action Health
-   ```
+1. 确认原始 PDF 存在、非空且以 `%PDF-` 开头。
+2. 在可见终端中启动或检查 PDF2zh。
 
-   成功响应必须包含 `status=ok`、Zotero 版本、token 路径和允许导入的根
-   目录。若失败，启动 Zotero 或重启一次；不要回退到 GUI 自动化。
-
-3. 启动或检查 PDF2zh 服务：
+   Windows：
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts/start_pdf2zh_visible.ps1
    ```
 
-   若 8890 端口已监听，脚本会立即返回。只有 uv 已安装时才会先尝试 uv；
-   否则在可见终端中启动已知 Conda 配置。若 uv 已安装但服务未能监听，检查
-   可见终端，再使用 `-ForceConda` 重新运行。
+   Linux：
 
-4. 通过 PDF2zh REST API 翻译：
+   ```bash
+   scripts/start_pdf2zh_visible.sh
+   ```
+
+   Linux 启动器会依次选择 uv、`PDF2zh` Conda 环境或兼容 Python；若没有图形
+   终端则停止，不得悄悄在后台启动而隐藏错误。
+
+3. 提交单篇翻译。
+
+   Windows：
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts/invoke_pdf2zh.ps1 `
-     -Source "D:\download\paper.pdf" `
-     -Endpoint compare
+     -Source "D:\download\paper.pdf" -Endpoint compare
    ```
 
-   返回 `status=success` 和 `outputFiles` 后仍需完成 PDF 验证，才能视为最终
-   成功。REST 请求为同步请求，可能持续数分钟；需要保持交互响应时，在后台
-   进程中执行并轮询日志。
+   Linux：
 
-5. 验证生成的 PDF：
-
-   - 确认文件存在、非空，并以 `%PDF-` 开头。
-   - 除非有意跳过页面，否则页数应与原文一致。
-   - 提取文本并确认包含有意义的中文内容。
-   - 条件允许时，目视检查代表性页面的双语布局。
-
-6. 通过带鉴权的 Zotero bridge 归档：
-
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/invoke_zotero_bridge.ps1 `
-     -Action Archive `
-     -SourceAttachmentID 849 `
-     -TargetCollectionID 80 `
-     -TranslatedPath "D:\resource\env\fanyi\server\server\translated\paper.compare.pdf" `
-     -ShortTitle "R2R" `
-     -Service "siliconflowfree" `
-     -TemplateItemID 695
+   ```bash
+   scripts/invoke_pdf2zh_linux.py \
+     --source /path/to/paper.pdf \
+     --endpoint compare \
+     --delivery /path/to/paper-中英对照.pdf
    ```
 
-   `TemplateItemID` 为可选参数，仅在必须新建文献父条目时使用。bridge 会把
-   父条目放入目标 collection，将原文命名为 `<shortTitle>-original`，将双语
-   附件命名为 `<shortTitle>-<service>-compare`，并移除子附件自身的 collection
-   归属。重复发送相同请求时必须返回 `idempotent=true`，不得创建重复条目。
+   Linux helper 先调用 REST。当 `/compare` 包装层返回
+   `CalledProcessError`，但本地 `pdf2zh_next` 可执行文件存在时，只对
+   `compare + siliconflowfree` 使用直接 CLI 回退。保留有效的
+   `*.no_watermark.zh-CN.dual.pdf`，再复制为 `*.compare.pdf`，不要通过移动
+   文件破坏原产物。回退运行期间不得并行提交第二个翻译。
 
-7. 核对返回的父条目 ID/key、两个子附件 ID、存储路径、页数和 collection
-   归属。父条目的 collection 列表必须包含目标 collection；两个子附件的
-   collection 列表必须为空。汇报耗时、回退情况和所有警告。
+   单段富文本解析失败、占位符过多或翻译结果长度不匹配时，PDF2zh 会降级为
+   普通翻译；只要进程最终返回 0 且产物验证通过，应作为警告汇报，而不是把
+   整篇标为失败。只读取脱敏后的日志尾部，不得输出可能包含密钥的原始日志。
 
-bridge 仅提供健康检查、更新元数据和受约束的归档操作。它要求本地 token，
-只接受 `server\translated` 下的译文 PDF，且不开放任意 JavaScript 或 SQL
-执行。只有维护或诊断 bridge 时才读取
+4. 验证双语 PDF。
+
+   ```bash
+   scripts/validate_bilingual_pdf.py \
+     --source /path/to/paper.pdf \
+     --translated /path/to/paper.compare.pdf \
+     --layout lr \
+     --render-prefix /tmp/paper-preview
+   ```
+
+   必须满足：
+
+   - 原文与译文均为有效 PDF，译文非空；
+   - 页数一致，除非任务明确跳过页面；
+   - 可提取足量、有意义的中文文本；
+   - LR 对照版宽度约为原文两倍，高度近似不变；
+   - 首屏目视检查无裁切、半页空白、乱码或字体缺失。
+
+5. 将验证后的文件复制到原文旁边，并保留服务目录中的归档副本。
+
+## 诊断 Linux 代理导入失败
+
+若 `httpx` 在导入 `ollama` 时出现
+`ValueError: Unknown scheme for proxy URL URL('socks://…')`，应判定为进程环境
+错误，而不是字体或 PDF 错误；自动附加 `--skip-subset-fonts` 的重试无法修复。
+
+- 只检查代理变量名与 scheme，不得打印完整代理 URL、凭据、API key 或 token。
+- 检查 8890 监听进程的环境，而不只看当前 shell。图形终端可能继承不同的
+  `ALL_PROXY`。
+- `scripts/start_pdf2zh_visible.sh` 会在新服务终端内部，仅移除以
+  `socks://` 开头的不兼容 `ALL_PROXY`/`all_proxy`，保留有效的
+  `HTTP_PROXY` 与 `HTTPS_PROXY`。
+- 已运行的服务若继承了错误变量，先解析准确的监听 PID，只停止该 PDF2zh
+  进程，再重新运行启动器。不得修改用户的全局代理设置。
+- 用仅取消错误变量的导入探针验证 `ollama` 与 `pdf2zh`，然后检查 `/health`。
+  如果必须使用 SOCKS，先确认已安装 SOCKS 依赖，再改用当前 `httpx` 支持的
+  scheme，例如 `socks5://`。
+
+## 按需归档到 Zotero
+
+安装、鉴权、路径或归档诊断前读取
 [references/zotero-bridge.md](references/zotero-bridge.md)。
 
-## 失败处理
+1. Windows 调用 `invoke_zotero_bridge.ps1 -Action Health`；Linux 调用：
 
-- 8890 端口不可用时，先检查可见服务终端，再考虑切换环境。
-- uv 不可用或来自其他电脑时，使用 Conda 回退方案，并附加
-  `--enable_venv false --check_update false`；同时把两个内置 PDF2zh 虚拟
-  环境的 `Scripts` 目录加入 `PATH` 前部。
-- bridge 健康检查失败时，确认 Zotero 正在运行、持久化插件位于当前 profile，
-  且 token 文件可读。插件更新后重启 Zotero 一次。
-- 归档返回 `UNAUTHORIZED` 时，不要把 token 粘贴到命令或对话中；让
-  `invoke_zotero_bridge.ps1` 自行读取 token 文件。
-- 归档返回 `PATH_OUTSIDE_ALLOWED_ROOT` 时，把已经验证的输出保留在
-  `server\translated`，并使用该绝对路径重试。
-- 服务返回成功但文件不存在时，检查 `server\translated`、可见终端及
-  `fileList` 中的准确文件名。
-- Zotero storage 副本创建完成且 PDF 验证通过之前，不删除服务输出。
+   ```bash
+   scripts/invoke_zotero_bridge.py health
+   ```
+
+2. bridge 未安装时，只有在用户明确授权后，才通过 Zotero 的
+   **Tools → Plugins → 齿轮 → Install Plugin From File** 安装捆绑 XPI。
+   把新 XPI 静默复制到 profile 不会构成有效安装，也不得修改
+   `extensions.json`。
+
+3. 明确目标 collection。若有多个合理目标，必须让用户选择；主题与唯一集合
+   明确对应时可说明判断依据后使用。
+
+4. 原文尚未进入 Zotero 时，Linux 使用受限、幂等的 `prepare`：
+
+   ```bash
+   scripts/invoke_zotero_bridge.py prepare \
+     --source-path ~/Downloads/paper.pdf \
+     --target-collection-id 77 \
+     --short-title PaperName
+   ```
+
+   `prepare` 只接受允许源目录下的 PDF，并返回 `source.id`。重复调用必须复用
+   已存在的 `<shortTitle>-original`，不得创建重复附件。
+
+5. 使用验证后的 `server/translated/*.compare.pdf` 归档：
+
+   ```bash
+   scripts/invoke_zotero_bridge.py archive \
+     --source-attachment-id 849 \
+     --target-collection-id 77 \
+     --translated-path /absolute/server/translated/paper.compare.pdf \
+     --short-title PaperName \
+     --service siliconflowfree
+   ```
+
+6. 核对父条目 ID/key、原文与译文附件 ID、路径和 collection：
+
+   - 两个附件必须共享同一文献父条目；
+   - 只有父条目属于目标 collection，两个子附件的 collection 为空；
+   - 必须对 bridge 返回的 `translated.path` 实体文件重新运行 PDF 验证，不能仅
+     凭同名 Zotero 附件记录判定归档成功；
+   - 同名附件记录存在但实体文件缺失或为空时，bridge 应重新导入并返回
+     `repaired=true`；
+   - 重复调用必须返回 `idempotent=true`。
+
+Zotero 运行时不得直接编辑 `zotero.sqlite`。使用 `immutable=1` 打开的 SQLite
+可能忽略仍在 WAL 中的最新条目，因此不能把它当作最终存在性判断；优先信任
+bridge 返回值，或先完全关闭 Zotero 再执行只读数据库审计。
