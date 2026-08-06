@@ -1,21 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_directory=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 server_directory="${PDF2ZH_SERVER_DIRECTORY:-}"
+config_path="${PDF2ZH_SKILL_CONFIG:-}"
+search_root=""
 port=8890
 wait_seconds=40
 
 usage() {
   printf '%s\n' \
-    'Usage: start_pdf2zh_visible.sh [--server-directory PATH] [--port PORT] [--wait-seconds SECONDS]' \
+    'Usage: start_pdf2zh_visible.sh [--server-directory PATH] [--config PATH] [--search-root PATH] [--port PORT] [--wait-seconds SECONDS]' \
     '' \
-    'Start the native-Linux PDF2zh server in a visible terminal and wait for /health.'
+    'Refresh local path discovery, start PDF2zh visibly, and wait for /health.'
 }
 
 while (($#)); do
   case "$1" in
     --server-directory)
       server_directory=${2:?missing path after --server-directory}
+      shift 2
+      ;;
+    --config)
+      config_path=${2:?missing path after --config}
+      shift 2
+      ;;
+    --search-root)
+      search_root=${2:?missing path after --search-root}
       shift 2
       ;;
     --port)
@@ -41,21 +52,27 @@ done
 [[ "$port" =~ ^[0-9]+$ ]] || { printf 'Port must be numeric.\n' >&2; exit 2; }
 [[ "$wait_seconds" =~ ^[0-9]+$ ]] || { printf 'Wait time must be numeric.\n' >&2; exit 2; }
 
-if [[ -z "$server_directory" ]]; then
-  for candidate in \
-    "$HOME/resource/env/zotero/zotero-pdf2zh/server" \
-    "$HOME/resource/env/fanyi/server/server"; do
-    if [[ -f "$candidate/server.py" ]]; then
-      server_directory=$candidate
-      break
-    fi
-  done
-fi
-
-[[ -n "$server_directory" ]] || {
-  printf 'PDF2zh server directory was not found; pass --server-directory.\n' >&2
+resolver_python=$(command -v python3 || command -v python || true)
+[[ -n "$resolver_python" ]] || {
+  printf 'Python is required to discover and cache local PDF2zh paths.\n' >&2
   exit 1
 }
+resolver=("$resolver_python" "$script_directory/local_config.py")
+refresh=("${resolver[@]}" refresh)
+[[ -z "$config_path" ]] || refresh+=(--config "$config_path")
+[[ -z "$server_directory" ]] || refresh+=(--server-directory "$server_directory")
+[[ -z "$search_root" ]] || refresh+=(--search-root "$search_root")
+"${refresh[@]}" >/dev/null
+
+config_get() {
+  local key=$1
+  local command=("${resolver[@]}" get "$key")
+  [[ -z "$config_path" ]] || command+=(--config "$config_path")
+  "${command[@]}"
+}
+
+server_directory=$(config_get pdf2zh_server_directory)
+
 server_directory=$(realpath "$server_directory")
 [[ -f "$server_directory/server.py" ]] || {
   printf 'server.py not found below %s\n' "$server_directory" >&2
@@ -86,14 +103,17 @@ fi
 
 run_command=()
 method=""
-if command -v uv >/dev/null 2>&1; then
-  run_command=(uv run --python 3.12 --with-requirements requirements.txt server.py --port "$port")
+uv_executable=$(config_get uv_executable 2>/dev/null || true)
+conda_executable=$(config_get conda_executable 2>/dev/null || true)
+python_executable=$(config_get python_executable 2>/dev/null || true)
+if [[ -n "$uv_executable" ]]; then
+  run_command=("$uv_executable" run --python 3.12 --with-requirements requirements.txt server.py --port "$port")
   method="uv"
-elif command -v conda >/dev/null 2>&1 && conda env list 2>/dev/null | awk '{print $1}' | grep -qx PDF2zh; then
-  run_command=(conda run -n PDF2zh python server.py --enable_venv false --check_update false --port "$port")
+elif [[ -n "$conda_executable" ]] && "$conda_executable" env list 2>/dev/null | awk '{print $1}' | grep -qx PDF2zh; then
+  run_command=("$conda_executable" run -n PDF2zh python server.py --enable_venv false --check_update false --port "$port")
   method="conda"
-elif python3 -c 'import flask, toml, pypdf, fitz' >/dev/null 2>&1; then
-  run_command=(python3 server.py --enable_venv false --check_update false --port "$port")
+elif [[ -n "$python_executable" ]] && "$python_executable" -c 'import flask, toml, pypdf, fitz' >/dev/null 2>&1; then
+  run_command=("$python_executable" server.py --enable_venv false --check_update false --port "$port")
   method="python"
 else
   printf 'Neither uv, the PDF2zh Conda environment, nor a compatible Python is available.\n' >&2
@@ -101,10 +121,16 @@ else
 fi
 
 terminal=()
-if command -v gnome-terminal >/dev/null 2>&1 && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
-  terminal=(gnome-terminal --title='PDF2zh Server — keep open' --)
-elif command -v xterm >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
-  terminal=(xterm -T 'PDF2zh Server — keep open' -e)
+terminal_executable=$(config_get terminal_executable 2>/dev/null || true)
+terminal_name=$(basename -- "${terminal_executable:-missing}")
+if [[ "$terminal_name" == "gnome-terminal" && -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+  terminal=("$terminal_executable" --title='PDF2zh Server — keep open' --)
+elif [[ "$terminal_name" == "xterm" && -n "${DISPLAY:-}" ]]; then
+  terminal=("$terminal_executable" -T 'PDF2zh Server — keep open' -e)
+elif [[ "$terminal_name" == "konsole" && -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+  terminal=("$terminal_executable" --new-tab -p tabtitle='PDF2zh Server — keep open' -e)
+elif [[ "$terminal_name" == "xfce4-terminal" && -n "${DISPLAY:-}" ]]; then
+  terminal=("$terminal_executable" --title='PDF2zh Server — keep open' --execute)
 else
   printf 'No graphical terminal is available; start the server visibly before continuing.\n' >&2
   exit 1

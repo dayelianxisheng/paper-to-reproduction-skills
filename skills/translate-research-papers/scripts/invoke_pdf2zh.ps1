@@ -6,7 +6,10 @@ param(
     [string]$Endpoint = "compare",
 
     [string]$ServerUrl = "http://127.0.0.1:8890",
-    [string]$TranslatedDirectory = "D:\resource\env\fanyi\server\server\translated",
+    [string]$TranslatedDirectory,
+    [string]$ServerDirectory,
+    [string]$ConfigPath,
+    [string]$SearchRoot,
     [string]$NextService = "siliconflowfree",
     [string]$SourceLanguage = "en",
     [string]$TargetLanguage = "zh-CN",
@@ -16,6 +19,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot "local_config.ps1")
 
 $resolvedSource = (Resolve-Path -LiteralPath $Source).Path
 if ([System.IO.Path]::GetExtension($resolvedSource) -ine ".pdf") {
@@ -26,6 +30,17 @@ $sourceInfo = Get-Item -LiteralPath $resolvedSource
 if ($sourceInfo.Length -lt 5) {
     throw "Source PDF is empty: $resolvedSource"
 }
+
+$localConfig = Update-LocalPathConfig `
+    -ConfigPath $ConfigPath `
+    -Source $resolvedSource `
+    -ServerDirectory $ServerDirectory `
+    -TranslatedDirectory $TranslatedDirectory `
+    -SearchRoot $SearchRoot
+$TranslatedDirectory = Get-RequiredLocalPath `
+    -Config $localConfig `
+    -Key "pdf2zh_translated_directory" `
+    -Directory
 
 $config = [ordered]@{
     engine                    = "pdf2zh_next"
@@ -129,4 +144,3 @@ $outputs = foreach ($fileName in $response.fileList) {
     elapsedSeconds = [math]::Round(((Get-Date) - $started).TotalSeconds, 1)
     outputFiles = @($outputs)
 } | ConvertTo-Json -Depth 5
-

@@ -1,5 +1,5 @@
 var PDF2zhBridge = {
-  version: "0.3.1",
+  version: "0.4.0",
   token: null,
   tokenPath: null,
   endpointPaths: [
@@ -12,6 +12,7 @@ var PDF2zhBridge = {
   ],
   allowedSourceRoot: null,
   allowedImportRoot: null,
+  localConfigPath: null,
 
   json(status, value) {
     return [
@@ -59,38 +60,55 @@ var PDF2zhBridge = {
     return parsed;
   },
 
-  resolveAllowedRoots() {
+  parseLocalYAML(text) {
+    let values = {};
+    for (let line of text.split(/\r?\n/)) {
+      line = line.trim();
+      if (!line || line.startsWith("#")) {
+        continue;
+      }
+      let match = line.match(/^([A-Za-z0-9_]+):\s*(.+)$/);
+      if (!match) {
+        continue;
+      }
+      let value = match[2].trim();
+      if (value.startsWith('"')) {
+        try {
+          value = JSON.parse(value);
+        }
+        catch (e) {
+          throw new Error(`Invalid YAML value for ${match[1]}`);
+        }
+      }
+      values[match[1]] = value;
+    }
+    return values;
+  },
+
+  async resolveAllowedRoots() {
     let configuredSource = Services.env.get("PDF2ZH_SOURCE_DIRECTORY");
     let configuredTranslated = Services.env.get("PDF2ZH_TRANSLATED_DIRECTORY");
-    if (configuredSource && configuredTranslated) {
-      this.allowedSourceRoot = configuredSource;
-      this.allowedImportRoot = configuredTranslated;
-      return;
+    this.localConfigPath = Services.env.get("PDF2ZH_SKILL_CONFIG") || null;
+    if ((!configuredSource || !configuredTranslated) && this.localConfigPath) {
+      let contents;
+      try {
+        contents = await Zotero.File.getContentsAsync(this.localConfigPath);
+      }
+      catch (e) {
+        throw new Error("PDF2ZH_SKILL_CONFIG does not point to a readable YAML file");
+      }
+      let localConfig = this.parseLocalYAML(contents);
+      configuredSource = configuredSource || localConfig.pdf2zh_source_directory;
+      configuredTranslated = configuredTranslated
+        || localConfig.pdf2zh_translated_directory;
     }
-
-    if (Zotero.isWin) {
-      this.allowedSourceRoot = configuredSource || String.raw`D:\download`;
-      this.allowedImportRoot = configuredTranslated
-        || String.raw`D:\resource\env\fanyi\server\server\translated`;
-      return;
-    }
-
-    let home = Services.env.get("HOME");
-    if (!home) {
-      throw new Error("HOME is unavailable; set PDF2ZH source and translated directories");
-    }
-    this.allowedSourceRoot = configuredSource
-      || PathUtils.join(home, "Downloads");
-    this.allowedImportRoot = configuredTranslated
-      || PathUtils.join(
-        home,
-        "resource",
-        "env",
-        "zotero",
-        "zotero-pdf2zh",
-        "server",
-        "translated"
+    if (!configuredSource || !configuredTranslated) {
+      throw new Error(
+        "Set PDF2ZH_SKILL_CONFIG or both PDF2ZH source/translated directory variables"
       );
+    }
+    this.allowedSourceRoot = configuredSource;
+    this.allowedImportRoot = configuredTranslated;
   },
 
   getAllowedPDF(path, allowedRoot, pathName) {
@@ -686,7 +704,7 @@ var PDF2zhBridge = {
   },
 
   async register() {
-    this.resolveAllowedRoots();
+    await this.resolveAllowedRoots();
     await this.loadOrCreateToken();
     let bridge = this;
 
@@ -715,6 +733,7 @@ var PDF2zhBridge = {
             bridgeVersion: bridge.version,
             zoteroVersion: Zotero.version,
             tokenPath: bridge.tokenPath,
+            localConfigPath: bridge.localConfigPath,
             allowedSourceRoot: bridge.allowedSourceRoot,
             allowedImportRoot: bridge.allowedImportRoot
           });

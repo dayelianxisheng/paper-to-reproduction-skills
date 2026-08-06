@@ -1,5 +1,7 @@
 param(
-    [string]$ServerDirectory = "D:\resource\env\fanyi\server\server",
+    [string]$ServerDirectory,
+    [string]$ConfigPath,
+    [string]$SearchRoot,
     [int]$Port = 8890,
     [int]$WaitSeconds = 30,
     [switch]$ForceConda
@@ -7,6 +9,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot "local_config.ps1")
 
 function Test-Pdf2zhPort {
     param([int]$LocalPort)
@@ -25,7 +28,14 @@ function Wait-Pdf2zhPort {
     return $false
 }
 
-$resolvedServer = (Resolve-Path -LiteralPath $ServerDirectory).Path
+$localConfig = Update-LocalPathConfig `
+    -ConfigPath $ConfigPath `
+    -ServerDirectory $ServerDirectory `
+    -SearchRoot $SearchRoot
+$resolvedServer = Get-RequiredLocalPath `
+    -Config $localConfig `
+    -Key "pdf2zh_server_directory" `
+    -Directory
 
 if (Test-Pdf2zhPort -LocalPort $Port) {
     $listener = Get-NetTCPConnection -LocalPort $Port -State Listen |
@@ -39,10 +49,18 @@ if (Test-Pdf2zhPort -LocalPort $Port) {
     exit 0
 }
 
-$uv = Get-Command uv -ErrorAction SilentlyContinue
-if ($uv -and -not $ForceConda) {
-    $uvCommand = 'cd /d "{0}" && set "PYTHONIOENCODING=utf-8" && uv run --python 3.12 --with-requirements requirements.txt server.py' -f $resolvedServer
-    $uvProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $uvCommand -WindowStyle Normal -PassThru
+$proxyPrefix = ""
+foreach ($name in @("ALL_PROXY", "all_proxy")) {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ($value -like "socks://*") {
+        $proxyPrefix += 'set "{0}=" && ' -f $name
+    }
+}
+$cmd = (Get-Command cmd.exe -ErrorAction Stop).Source
+$uvPath = $localConfig["uv_executable"]
+if ($uvPath -and (Test-Path -LiteralPath $uvPath -PathType Leaf) -and -not $ForceConda) {
+    $uvCommand = '{0}cd /d "{1}" && set "PYTHONIOENCODING=utf-8" && "{2}" run --python 3.12 --with-requirements requirements.txt server.py --port {3}' -f $proxyPrefix, $resolvedServer, $uvPath, $Port
+    $uvProcess = Start-Process -FilePath $cmd -ArgumentList "/k", $uvCommand -WindowStyle Normal -PassThru
     if (Wait-Pdf2zhPort -LocalPort $Port -Seconds $WaitSeconds) {
         [pscustomobject]@{
             status = "started"
@@ -55,15 +73,15 @@ if ($uv -and -not $ForceConda) {
     throw "uv was launched visibly but port $Port did not start. Inspect that terminal, then rerun with -ForceConda."
 }
 
-$condaActivate = "D:\resource\env\miniconda3\Scripts\activate.bat"
-if (-not (Test-Path -LiteralPath $condaActivate)) {
-    throw "Conda activation script not found: $condaActivate"
+$condaPath = $localConfig["conda_executable"]
+if (-not $condaPath -or -not (Test-Path -LiteralPath $condaPath -PathType Leaf)) {
+    throw "Conda was not discovered. Refresh the YAML config or install uv."
 }
 
 $legacyScripts = Join-Path $resolvedServer "zotero-pdf2zh-venv\Scripts"
 $nextScripts = Join-Path $resolvedServer "zotero-pdf2zh-next-venv\Scripts"
-$condaCommand = 'cd /d "{0}" && call "{1}" PDF2zh && set "PATH={2};{3};%PATH%" && set "PYTHONIOENCODING=utf-8" && python server.py --enable_venv false --check_update false' -f $resolvedServer, $condaActivate, $legacyScripts, $nextScripts
-$condaProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $condaCommand -WindowStyle Normal -PassThru
+$condaCommand = '{0}cd /d "{1}" && set "PATH={2};{3};%PATH%" && set "PYTHONIOENCODING=utf-8" && "{4}" run -n PDF2zh python server.py --enable_venv false --check_update false --port {5}' -f $proxyPrefix, $resolvedServer, $legacyScripts, $nextScripts, $condaPath, $Port
+$condaProcess = Start-Process -FilePath $cmd -ArgumentList "/k", $condaCommand -WindowStyle Normal -PassThru
 
 if (-not (Wait-Pdf2zhPort -LocalPort $Port -Seconds $WaitSeconds)) {
     throw "Conda fallback was launched visibly but port $Port did not start. Inspect the terminal."
@@ -75,4 +93,3 @@ if (-not (Wait-Pdf2zhPort -LocalPort $Port -Seconds $WaitSeconds)) {
     pid = $condaProcess.Id
     method = "conda"
 } | ConvertTo-Json -Compress
-

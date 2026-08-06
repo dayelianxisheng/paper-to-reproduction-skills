@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "PDF2zh Local Bridge",
-  "version": "0.3.1",
-  "description": "Restricted localhost bridge for PDF2zh archival and validated GitHub link attachments in Zotero.",
+  "version": "0.4.0",
+  "description": "Restricted config-driven localhost bridge for PDF2zh archival and validated GitHub link attachments in Zotero.",
   "author": "Local Codex workflow",
   "applications": {
     "zotero": {

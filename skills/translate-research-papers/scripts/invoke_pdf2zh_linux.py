@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import base64
 import json
-import os
 from pathlib import Path
 import re
 import shutil
@@ -15,6 +14,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+
+from local_config import default_config_path, refresh_config
 
 
 DEFAULT_CONFIG = {
@@ -52,25 +53,6 @@ DEFAULT_CONFIG = {
     "translateTableText": "false",
     "onlyIncludeTranslatedPage": "false",
 }
-
-
-def existing_server_directory(explicit: str | None) -> Path:
-    candidates = []
-    if explicit:
-        candidates.append(Path(explicit).expanduser())
-    if os.environ.get("PDF2ZH_SERVER_DIRECTORY"):
-        candidates.append(Path(os.environ["PDF2ZH_SERVER_DIRECTORY"]).expanduser())
-    candidates.extend(
-        [
-            Path.home() / "resource/env/zotero/zotero-pdf2zh/server",
-            Path.home() / "resource/env/fanyi/server/server",
-        ]
-    )
-    for candidate in candidates:
-        resolved = candidate.resolve()
-        if (resolved / "server.py").is_file():
-            return resolved
-    raise FileNotFoundError("PDF2zh server directory not found; pass --server-directory")
 
 
 def redact(text: str) -> str:
@@ -207,7 +189,8 @@ def direct_cli_fallback(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=True, type=Path)
-    parser.add_argument("--server-directory")
+    parser.add_argument("--server-directory", type=Path)
+    parser.add_argument("--config", type=Path)
     parser.add_argument("--server-url", default="http://127.0.0.1:8890")
     parser.add_argument("--translated-directory", type=Path)
     parser.add_argument(
@@ -219,6 +202,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     parser.add_argument("--no-cli-fallback", action="store_true")
     parser.add_argument("--force-cli", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--delivery", type=Path)
     args = parser.parse_args()
     args.source = args.source.expanduser().resolve()
@@ -231,13 +215,55 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    server_directory = existing_server_directory(args.server_directory)
+    config_path = (args.config or default_config_path()).expanduser().resolve()
+    overrides = {
+        "pdf2zh_server_directory": args.server_directory,
+        "pdf2zh_translated_directory": args.translated_directory,
+    }
+    _, local_paths, _ = refresh_config(
+        config_path,
+        source=args.source,
+        overrides=overrides,
+        search_roots=(args.source.parent,),
+    )
+    server_value = local_paths.get("pdf2zh_server_directory")
+    if not isinstance(server_value, str):
+        raise FileNotFoundError(
+            "PDF2zh server directory was not discovered; pass --server-directory"
+        )
+    server_directory = Path(server_value).resolve()
+    translated_value = local_paths.get("pdf2zh_translated_directory")
     translated_directory = (
-        args.translated_directory.expanduser().resolve()
-        if args.translated_directory
+        Path(translated_value).resolve()
+        if isinstance(translated_value, str)
         else (server_directory / "translated").resolve()
     )
     translated_directory.mkdir(parents=True, exist_ok=True)
+    if not isinstance(translated_value, str):
+        _, local_paths, _ = refresh_config(
+            config_path,
+            source=args.source,
+            overrides={
+                "pdf2zh_server_directory": server_directory,
+                "pdf2zh_translated_directory": translated_directory,
+            },
+        )
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "status": "dry-run",
+                    "localConfig": str(config_path),
+                    "source": str(args.source),
+                    "serverDirectory": str(server_directory),
+                    "translatedDirectory": str(translated_directory),
+                    "endpoint": args.endpoint,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
     method = "rest"
     fallback_reason = None
     preserved: list[Path] = []
@@ -277,6 +303,7 @@ def main() -> int:
 
     result = {
         "status": "success",
+        "localConfig": str(config_path),
         "method": method,
         "fallbackReason": fallback_reason,
         "endpoint": args.endpoint,

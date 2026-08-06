@@ -18,20 +18,28 @@ X-PDF2zh-Bridge-Token: <local token>
 Zotero-Allowed-Request: true
 ```
 
-Default token paths:
+## Local YAML configuration
 
-- Windows: `D:\software\Professional\Zotero\note\pdf2zh-bridge.token`
-- Linux: `~/Zotero/pdf2zh-bridge.token`
+Run `scripts/local_config.py refresh` before bridge work. Require these verified
+YAML keys:
+
+- `pdf2zh_source_directory`
+- `pdf2zh_translated_directory`
+- `zotero_data_directory`
+- `zotero_bridge_token_path`
+
+The YAML contains paths only, never token contents. Helpers refresh it and read
+the token path automatically. Supply an explicit discovery hint if a key is
+missing; do not add a machine-specific fallback to source code.
 
 ## Allowed roots
 
-The bridge accepts only PDF paths below two roots reported by `/health`:
-
-- Source root: `D:\download` on Windows or `~/Downloads` on Linux.
-- Translated root: the configured PDF2zh `server/translated` directory.
-
-Override both when launching Zotero with `PDF2ZH_SOURCE_DIRECTORY` and
-`PDF2ZH_TRANSLATED_DIRECTORY`. Path checks are case-insensitive only on Windows.
+Before starting Zotero, set `PDF2ZH_SKILL_CONFIG` to the generated YAML path.
+The bridge reads the matching source and translated keys when it starts.
+`PDF2ZH_SOURCE_DIRECTORY` and `PDF2ZH_TRANSLATED_DIRECTORY` may override those
+values. The bridge refuses to start without both resolved roots and has no
+built-in local paths. `/health` reports the YAML path and active roots. Path
+checks are case-insensitive only on Windows.
 
 ## Prepare contract
 

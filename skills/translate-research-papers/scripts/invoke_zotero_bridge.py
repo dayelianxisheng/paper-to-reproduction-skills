@@ -5,21 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 import sys
 import urllib.error
 import urllib.request
 
-
-def default_token_path() -> Path:
-    configured = os.environ.get("PDF2ZH_BRIDGE_TOKEN_PATH")
-    if configured:
-        return Path(configured).expanduser()
-    if os.name == "nt":
-        return Path(r"D:\software\Professional\Zotero\note\pdf2zh-bridge.token")
-    return Path.home() / "Zotero/pdf2zh-bridge.token"
+from local_config import default_config_path, refresh_config
 
 
 def read_token(path: Path) -> str:
@@ -100,7 +92,7 @@ def request_bridge(args: argparse.Namespace, token: str) -> dict[str, object]:
         headers={
             "X-PDF2zh-Bridge-Token": token,
             "Zotero-Allowed-Request": "true",
-            "User-Agent": "Codex-PDF2zh-Bridge/0.3",
+            "User-Agent": "Codex-PDF2zh-Bridge/0.4",
             **({"Content-Type": "application/json; charset=utf-8"} if body else {}),
         },
         method=method,
@@ -134,7 +126,8 @@ def add_archive_metadata(parser: argparse.ArgumentParser) -> None:
 def parse_args() -> argparse.Namespace:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--server-url", default="http://127.0.0.1:23119")
-    common.add_argument("--token-path", type=Path, default=default_token_path())
+    common.add_argument("--token-path", type=Path)
+    common.add_argument("--config", type=Path)
     common.add_argument("--timeout-seconds", type=positive, default=120)
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="action", required=True)
@@ -164,6 +157,24 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    config_path = (args.config or default_config_path()).expanduser().resolve()
+    source = args.source_path if args.action == "prepare" else None
+    overrides: dict[str, Path | None] = {
+        "zotero_bridge_token_path": args.token_path,
+    }
+    if args.action == "archive":
+        overrides["pdf2zh_translated_directory"] = args.translated_path.parent
+    _, local_paths, _ = refresh_config(
+        config_path,
+        source=source,
+        overrides=overrides,
+    )
+    token_value = local_paths.get("zotero_bridge_token_path")
+    if not isinstance(token_value, str):
+        raise FileNotFoundError(
+            "Zotero bridge token path was not discovered; pass --token-path"
+        )
+    args.token_path = Path(token_value)
     token = read_token(args.token_path)
     response = request_bridge(args, token)
     print(json.dumps(response, ensure_ascii=False, indent=2))

@@ -3,7 +3,10 @@ param(
     [string]$Action = "Health",
 
     [string]$ServerUrl = "http://127.0.0.1:23119",
-    [string]$TokenPath = "D:\software\Professional\Zotero\note\pdf2zh-bridge.token",
+    [string]$TokenPath,
+    [string]$ZoteroDataDirectory,
+    [string]$ConfigPath,
+    [string]$SearchRoot,
     [int]$SourceAttachmentID,
     [int]$TargetCollectionID,
     [Parameter()]
@@ -24,8 +27,24 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot "local_config.ps1")
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
+
+$translatedDirectoryHint = $null
+if (-not [string]::IsNullOrWhiteSpace($TranslatedPath) -and
+    (Test-Path -LiteralPath $TranslatedPath -PathType Leaf)) {
+    $translatedDirectoryHint = Split-Path -Parent (Resolve-Path -LiteralPath $TranslatedPath).Path
+}
+$localConfig = Update-LocalPathConfig `
+    -ConfigPath $ConfigPath `
+    -TranslatedDirectory $translatedDirectoryHint `
+    -ZoteroDataDirectory $ZoteroDataDirectory `
+    -TokenPath $TokenPath `
+    -SearchRoot $SearchRoot
+$TokenPath = Get-RequiredLocalPath `
+    -Config $localConfig `
+    -Key "zotero_bridge_token_path"
 
 $token = (Get-Content -LiteralPath $TokenPath -Raw -Encoding UTF8).Trim()
 if ($token -notmatch "^[A-Za-z0-9]{48,128}$") {
@@ -38,7 +57,7 @@ $headers = @{
 }
 $common = @{
     Headers = $headers
-    UserAgent = "Codex-PDF2zh-Bridge/0.1"
+    UserAgent = "Codex-PDF2zh-Bridge/0.4"
     TimeoutSec = 120
 }
 

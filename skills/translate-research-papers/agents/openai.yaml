@@ -1,4 +1,4 @@
 interface:
   display_name: "Translate Research Papers"
-  short_description: "Translate PDFs cross-platform and archive them in Zotero"
-  default_prompt: "Use $translate-research-papers to translate this paper, validate the bilingual PDF, and archive it in Zotero when requested."
+  short_description: "Discover local paths, translate PDFs, and archive in Zotero"
+  default_prompt: "Use $translate-research-papers to discover and cache valid local paths, translate this paper, validate the bilingual PDF, and archive it in Zotero when requested."
