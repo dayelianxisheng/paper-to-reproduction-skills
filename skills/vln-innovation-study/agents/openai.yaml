@@ -1,0 +1,4 @@
+interface:
+  display_name: "VLN Innovation Study"
+  short_description: "Trace VLN innovation lineages and causal evidence"
+  default_prompt: "Use $vln-innovation-study to analyze this embodied-navigation paper and update the linked VLN-paper repository."

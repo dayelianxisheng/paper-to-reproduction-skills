@@ -1,0 +1,124 @@
+{
+  "skill": "vln-innovation-study",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "zotero-original-vs-compare",
+      "prompt": "阅读 Zotero VLN 目录中的目标论文；同时存在原始 PDF 和同名 compare.pdf。",
+      "expected": [
+        "选择原始 PDF 作为证据锚点",
+        "将 compare.pdf 仅作为阅读辅助",
+        "记录来源定位模式"
+      ],
+      "forbidden": [
+        "按文件大小选择原始 PDF",
+        "使用 compare.pdf 页码作为 AUTHOR 证据"
+      ]
+    },
+    {
+      "id": "source-limited-abstract",
+      "prompt": "目前只有论文摘要，请分析它的核心创新和消融证据。",
+      "expected": [
+        "标明 source-limited",
+        "只陈述摘要明确支持的贡献",
+        "说明消融实验不可评估"
+      ],
+      "forbidden": [
+        "编造 Table、Figure、Equation 或页码",
+        "根据领域常识补全未见的模型细节"
+      ]
+    },
+    {
+      "id": "duet-etpnav-boundary",
+      "prompt": "比较 DUET 和 ETPNav 的拓扑节点，说明 ETPNav 是否只是把 DUET 搬到连续环境。",
+      "expected": [
+        "区分离散导航图节点与连续环境在线预测节点",
+        "区分 visited node 与 ghost node",
+        "按 inherited、extended 或 replaced 描述具体机制关系"
+      ],
+      "forbidden": [
+        "只按发表时间判断继承关系",
+        "把候选 waypoint、ghost node 和离散 graph node 当作同一对象"
+      ]
+    },
+    {
+      "id": "routine-formula-filter",
+      "prompt": "论文包含标准 Transformer attention、交叉熵和一个新的图距离 bias，请深讲所有公式。",
+      "expected": [
+        "把改变行为的图距离 bias 判为 MUST-DERIVE",
+        "把标准 attention 或交叉熵判为 UNDERSTAND-ROLE 或 SKIP",
+        "解释新公式相对最近基线改变了什么"
+      ],
+      "forbidden": [
+        "因为公式出现在论文中就逐条推导",
+        "把标准训练损失提升为主要创新"
+      ]
+    },
+    {
+      "id": "causal-language-calibration",
+      "prompt": "论文的完整模型超过基线 3 SPL，但没有核心模块消融。能否说新记忆模块导致了提升？",
+      "expected": [
+        "将总体提升与模块因果作用分开",
+        "指出更强编码器、数据或容量等潜在混淆",
+        "使用 reports、supports 或 suggests 等匹配证据的措辞"
+      ],
+      "forbidden": [
+        "声称该模块被证明是必要或充分条件",
+        "把 SOTA 排名当作因果证据"
+      ]
+    },
+    {
+      "id": "demo-vs-reproduction",
+      "prompt": "用二维迷宫演示 ghost node 和回退，并把它写成 ETPNav 复现。",
+      "expected": [
+        "将产物标记为 Mechanism Demo",
+        "设置局部贪心基线、单一干预、固定预算和随机种子",
+        "写明不能支持论文 benchmark 结论"
+      ],
+      "forbidden": [
+        "将合成迷宫称为 Paper Reproduction",
+        "只生成动画而不保存量化指标"
+      ]
+    },
+    {
+      "id": "interactive-one",
+      "prompt": "用户刚学完当前创新点，随后仅输入“1”。",
+      "expected": [
+        "从下一项尚未讲解的创新点继续",
+        "本轮不超过三个自包含创新点",
+        "不重复已经讲过的通用任务知识"
+      ],
+      "forbidden": [
+        "把“1”解释成重新开始",
+        "从创新点退回泛化知识点讲解"
+      ]
+    },
+    {
+      "id": "notes-only-useful-content",
+      "prompt": "完成一次论文分析并更新学习仓库。",
+      "expected": [
+        "只把已经讲过或用户要求的有用内容写入路径笔记",
+        "把证据包和审计报告保留在仓库外缓存",
+        "把 Demo 放在 demos 目录"
+      ],
+      "forbidden": [
+        "在 notes 中创建 YAML、进度表、论文索引或创新地图",
+        "把完整内部工作分析复制到用户笔记"
+      ]
+    },
+    {
+      "id": "research-idea-gates",
+      "prompt": "根据当前论文提出一个新的显式拓扑与隐式记忆融合方向。",
+      "expected": [
+        "将想法标为 HYPOTHESIS",
+        "给出相对最近基线的精确机制改动",
+        "给出受控实验、证伪结果、预算和至少两个失败原因",
+        "在称为 novel 前检查先前工作"
+      ],
+      "forbidden": [
+        "把推测写成 AUTHOR 结论",
+        "没有先前工作检索就声称首次提出"
+      ]
+    }
+  ]
+}
